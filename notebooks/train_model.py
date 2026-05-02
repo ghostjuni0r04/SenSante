@@ -136,3 +136,37 @@ print("\nProbabilites par classe :")
 for classe, proba in zip(model_loaded.classes_, probas):
     bar = '#' * int(proba * 30)
     print(f"  {classe:10s} : {proba:.1%} {bar}")
+
+
+# ============================================================
+# EXERCICE 1 : Importance des features
+# ============================================================
+importances = model.feature_importances_
+for name, imp in sorted(zip(feature_cols, importances),
+                        key=lambda x: x[1], reverse=True):
+    print(f"  {name:20s} : {imp:.3f}")
+
+# ============================================================
+# EXERCICE 2 : Tester avec 3 patients fictifs
+# ============================================================
+print("\nRegions connues :", list(le_region_loaded.classes_))
+
+patients_test = [
+    {'age': 10, 'sexe': 'M', 'temperature': 37.0, 'tension_sys': 120,
+     'toux': False, 'fatigue': False, 'maux_tete': False, 'frissons': False, 'nausee': False, 'region': le_region_loaded.classes_[0]},
+    {'age': 35, 'sexe': 'F', 'temperature': 40.5, 'tension_sys': 130,
+     'toux': True, 'fatigue': True, 'maux_tete': True, 'frissons': True, 'nausee': True, 'region': le_region_loaded.classes_[1]},
+    {'age': 70, 'sexe': 'M', 'temperature': 38.5, 'tension_sys': 150,
+     'toux': True, 'fatigue': True, 'maux_tete': False, 'frissons': False, 'nausee': False, 'region': le_region_loaded.classes_[2]},
+]
+
+print("\n--- Exercice 2 : 3 patients fictifs ---")
+for i, p in enumerate(patients_test):
+    sexe_enc = le_sexe_loaded.transform([p['sexe']])[0]
+    region_enc = le_region_loaded.transform([p['region']])[0]
+    features = [p['age'], sexe_enc, p['temperature'], p['tension_sys'],
+                int(p['toux']), int(p['fatigue']), int(p['maux_tete']),
+                int(p['frissons']), int(p['nausee']), region_enc]
+    diag = model_loaded.predict([features])[0]
+    proba = model_loaded.predict_proba([features])[0].max()
+    print(f"Patient {i+1} ({p['sexe']}, {p['age']} ans, T°{p['temperature']}, {p['region']}) : {diag} ({proba:.1%})")
