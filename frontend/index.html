@@ -112,12 +112,17 @@
     </div>
   </main>
 
+  <div id="historique-section" class="max-w-4xl mx-auto px-4"></div>
+
   <!-- Footer -->
   <footer class="text-center text-gray-400 text-sm py-4">
     SenSante v0.3 · ESP/UCAD · L2 GLSI 2026
   </footer>
 
   <script>
+
+    const historique = [];  // ← ajoute cette ligne ici
+    
     const API_URL = "http://localhost:8000";
 
     async function diagnostiquer() {
@@ -168,22 +173,36 @@
     }
 
     function afficherResultat(r) {
-      const couleurs = {
-        paludisme: { bg:"bg-red-100", text:"text-red-800", bar:"bg-red-500", badge:"bg-red-500" },
-        grippe:    { bg:"bg-orange-100", text:"text-orange-800", bar:"bg-orange-500", badge:"bg-orange-500" },
-        typhoide:  { bg:"bg-yellow-100", text:"text-yellow-800", bar:"bg-yellow-500", badge:"bg-yellow-500" },
-        sain:      { bg:"bg-green-100", text:"text-green-800", bar:"bg-green-500", badge:"bg-green-500" }
-      };
+  const emojis = {
+    paludisme: "🦟",
+    grippe:    "🤧",
+    typhoide:  "🤒",
+    sain:      "✅"
+  };
+
+  const couleurs = {
+    paludisme: { bg:"bg-red-100", text:"text-red-800", bar:"bg-red-500", badge:"bg-red-500" },
+    grippe:    { bg:"bg-orange-100", text:"text-orange-800", bar:"bg-orange-500", badge:"bg-orange-500" },
+    typhoide:  { bg:"bg-yellow-100", text:"text-yellow-800", bar:"bg-yellow-500", badge:"bg-yellow-500" },
+    sain:      { bg:"bg-green-100", text:"text-green-800", bar:"bg-green-500", badge:"bg-green-500" }
+  };
 
       const c = couleurs[r.diagnostic] || couleurs["sain"];
       const pct = Math.round(r.probabilite * 100);
-
+        // Ajouter à l'historique
+historique.unshift({
+  diagnostic: r.diagnostic,
+  probabilite: Math.round(r.probabilite * 100),
+  confiance: r.confiance,
+  emoji: emojis[r.diagnostic] || "🩺"
+});
+if (historique.length > 5) historique.pop();
       document.getElementById("result-section").innerHTML = `
         <div class="bg-white rounded-xl shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-800 mb-4">Résultat</h2>
           <div class="${c.bg} rounded-lg p-4 mb-4">
             <p class="text-sm text-gray-600">Diagnostic :</p>
-            <p class="text-2xl font-bold ${c.text} uppercase mt-1">${r.diagnostic}</p>
+           <p class="text-2xl font-bold ${c.text} uppercase mt-1">${emojis[r.diagnostic] || "🩺"} ${r.diagnostic}</p>
           </div>
           <div class="mb-4">
             <div class="flex justify-between mb-1">
@@ -202,6 +221,7 @@
             <p class="text-sm text-gray-700">${r.message}</p>
           </div>
         </div>`;
+        afficherHistorique();
     }
 
     function afficherErreur(msg) {
@@ -211,6 +231,36 @@
           <p class="text-red-500 text-sm mt-2">Vérifiez votre connexion et réessayez.</p>
         </div>`;
     }
+
+    function afficherHistorique() {
+  const container = document.getElementById("historique-section");
+  if (historique.length === 0) return;
+  container.innerHTML = `
+    <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-3">📋 Dernières consultations</h2>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-gray-500 border-b">
+            <th class="text-left pb-2">#</th>
+            <th class="text-left pb-2">Diagnostic</th>
+            <th class="text-left pb-2">Probabilité</th>
+            <th class="text-left pb-2">Confiance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${historique.map((h, i) => `
+            <tr class="border-b last:border-0">
+              <td class="py-2 text-gray-400">${i + 1}</td>
+              <td class="py-2 font-medium">${h.emoji} ${h.diagnostic}</td>
+              <td class="py-2">${h.probabilite}%</td>
+              <td class="py-2">${h.confiance}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
   </script>
 
 </body>
